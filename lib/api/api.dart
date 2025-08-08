@@ -7,28 +7,23 @@ class ApiService {
 
   ApiService({required this.baseUrl});
 
-  Future<List<TeamMovement>> fetchTeamMovements(String scannedCode) async {
-    final url = Uri.parse('$baseUrl/team-get-movements/$scannedCode');
-    print('🌐 Solicitando: $url');
-    final response = await http.get(url);
-    print('📥 Response status: ${response.statusCode}');
-    print('📥 Response body: ${response.body}');
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
+  Future<TeamData?> fetchTeamMovements(String scannedCode) async {
+  final url = Uri.parse('$baseUrl/team-get-movements/$scannedCode');
+  final response = await http.get(url);
 
-      // Verifica que 'data' existe y es una lista
-      if (json['data'] != null && json['data'] is List) {
-        return (json['data'] as List)
-            .map((item) => TeamMovement.fromJson(item))
-            .toList();
-      } else {
-        print('⚠️ No se encontró una lista válida en la clave "data"');
-        return []; // o lanza error si prefieres
-      }
+  if (response.statusCode == 200) {
+    final jsonMap = jsonDecode(response.body);
+
+    if (jsonMap['data'] != null) {
+      return TeamData.fromJson(jsonMap['data']);
     } else {
-      throw Exception('Error al obtener movimientos: ${response.statusCode}');
+      print('⚠️ No se encontró clave "data" en la respuesta');
+      return null;
     }
+  } else {
+    throw Exception('Error al obtener movimientos: ${response.statusCode}');
   }
+}
 
   Future<void> sendTeamId(String teamId) async {
     final url = Uri.parse('$baseUrl/team-received/$teamId');

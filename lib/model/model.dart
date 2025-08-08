@@ -1,5 +1,85 @@
 import 'dart:convert';
 
+class TeamMovementResponse {
+  final String status;
+  final String message;
+  final TeamData data;
+
+  TeamMovementResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+  });
+
+  factory TeamMovementResponse.fromJson(Map<String, dynamic> json) {
+    return TeamMovementResponse(
+      status: json['status'],
+      message: json['message'],
+      data: TeamData.fromJson(json['data']),
+    );
+  }
+}
+
+/// Contiene el objeto `team` y la lista `items`
+class TeamData {
+  final Team team;
+  final List<TeamMovement> items;
+
+  TeamData({
+    required this.team,
+    required this.items,
+  });
+
+  factory TeamData.fromJson(Map<String, dynamic> json) {
+    return TeamData(
+      team: Team.fromJson(json['team']),
+      items: (json['items'] as List)
+          .map((e) => TeamMovement.fromJson(e))
+          .toList(),
+    );
+  }
+}
+
+/// Objeto `team` del JSON
+class Team {
+  final int id;
+  final String code;
+  final String description;
+  final int stock;
+  final String stateCalibration;
+  final bool state;
+  final String createdAt;
+  final String updatedAt;
+  final String? deletedAt;
+
+  Team({
+    required this.id,
+    required this.code,
+    required this.description,
+    required this.stock,
+    required this.stateCalibration,
+    required this.state,
+    required this.createdAt,
+    required this.updatedAt,
+    this.deletedAt,
+  });
+
+  factory Team.fromJson(Map<String, dynamic> json) {
+    return Team(
+      id: json['id'],
+      code: json['code'],
+      description: json['description'],
+      stock: json['stock'],
+      stateCalibration: json['state_calibration'],
+      state: json['state'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
+      deletedAt: json['deleted_at'],
+    );
+  }
+}
+
+/// Objeto de la lista `items`
 class TeamMovement {
   final int id;
   final int movementId;
@@ -32,7 +112,7 @@ class TeamMovement {
   }
 }
 
-
+/// Objeto `movement` dentro de cada `item`
 class Movement {
   final int id;
   final int companyId;
