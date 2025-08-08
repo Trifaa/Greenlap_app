@@ -9,46 +9,30 @@ class DatabaseHelper {
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB('user.db');
+    _database = await initDB();
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
+  Future<Database> initDB() async {
     final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    final path = join(dbPath, 'my_database.db');
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: (db, version) async {
+        await db.execute('''
+          CREATE TABLE user (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER
+          )
+        ''');
+      },
+    );
   }
 
-  Future _createDB(Database db, int version) async {
-    await db.execute('''
-    CREATE TABLE user (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL
-    )
-    ''');
-  }
-
-  Future<int> insertUser(int userId) async {
-    final db = await instance.database;
-
-    // Limpiar usuarios anteriores (solo 1 guardado)
-    await db.delete('user');
-
-    return await db.insert('user', {'user_id': userId});
-  }
-
-  Future<int?> getUserId() async {
-    final db = await instance.database;
-    final result = await db.query('user', limit: 1);
-    if (result.isNotEmpty) {
-      return result.first['user_id'] as int;
-    }
-    return null;
-  }
-
-  Future<void> logout() async {
-    final db = await instance.database;
-    await db.delete('user');
+  Future<void> insertUserId(int userId) async {
+    final db = await database;
+    await db.insert('user', {'user_id': userId});
   }
 }

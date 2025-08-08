@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:greenlab_app/db/database.dart';
 import 'package:greenlab_app/home.dart';
 import 'dart:convert';
 import 'package:greenlab_app/style/style_login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -20,15 +23,45 @@ class _StateLogin extends State<Login> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (email == 'admin123@gmail.com' && password == 'admin123') {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Login exitoso!')),
+    if (email.isEmpty || password.isEmpty) {
+      _showErrorDialog('Por favor, completa todos los campos.');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse("http://greenlabperu.com/api/v1/login-app"),
+        body: {
+          "email": email,
+          "password": password,
+        },
       );
-       Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
-    } else {
-      _showErrorDialog('Credenciales incorrectas');
+
+      final data = jsonDecode(response.body);
+
+      if (data['status'] == "success") {
+        int userId = data['data']['user_id'];
+
+        // Guardar en SQLite
+        await DatabaseHelper.instance.insertUserId(userId);
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('isLoggedIn', true);
+  await prefs.setInt('user_id', userId);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Login exitoso!')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => HomePage()),
+        );
+      } else {
+        _showErrorDialog(data['message'] ?? "Error de inicio de sesión");
+      }
+    } catch (e) {
+      _showErrorDialog("Error de conexión: $e");
     }
   }
 
@@ -54,80 +87,43 @@ class _StateLogin extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return DefaultTextStyle(
-        style: TextStyle(fontSize: 14.sp),
-        child: Scaffold(
-          body: Padding(
-            padding: EdgeInsets.only(left: 20.w, right: 20.w),
-            child: Center(
-              child: SingleChildScrollView(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GreenLabLogo(),
-                  TextFormField(
-                    style: TextStyle(color: colorScheme.onSurface),
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide:
-                              BorderSide(color: colorScheme.primary, width: 1),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                                color: colorScheme.primary, width: 2)),
-                        labelText: 'Correo',
-                        prefixIcon: Icon(
-                          Icons.email_outlined,
-                          color: colorScheme.primary,
-                        )),
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                GreenLabLogo(),
+                TextFormField(
+                  style: TextStyle(color: colorScheme.onSurface),
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Correo',
+                    prefixIcon: Icon(Icons.email_outlined, color: colorScheme.primary),
                   ),
-                  SizedBox(height: 10.h),
-                  PasswordField(controller: _passwordController),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        foregroundColor: colorScheme.primary,
-                      ),
-                      child: const Text('¿Olvidaste tu contraseña?'),
+                ),
+                SizedBox(height: 10.h),
+                PasswordField(controller: _passwordController),
+                SizedBox(height: 15.h),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
                     ),
+                    child: const Text('Ingresar'),
                   ),
-                  SizedBox(height: 15.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                        onPressed: _login,
-                        style: ElevatedButton.styleFrom(
-                            textStyle: const TextStyle(fontSize: 18),
-                            backgroundColor: colorScheme.primary,
-                            foregroundColor: colorScheme.onPrimary),
-                        child: const Text('Ingresar')),
-                  ),
-                  SizedBox(height: 5),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('No tienes cuenta?',
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurface)),
-                      TextButton(
-                          onPressed: () {
-                            // Aquí iría la navegación al registro
-                          },
-                          child: const Text(
-                            'Registrate',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          )),
-                    ],
-                  ),
-                ],
-              )),
+                ),
+              ],
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

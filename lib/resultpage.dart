@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:greenlab_app/api/api.dart';
+import 'package:greenlab_app/home.dart';
 import 'package:greenlab_app/model/model.dart';
 import 'package:greenlab_app/style/style_login.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -28,13 +29,13 @@ class _ResultPageState extends State<ResultPage> {
   String diaRegreso = '';
   String compania = '';
   String estado = '';
+  int? teamId = 0;
 
   @override
   void initState() {
     super.initState();
 
     final baseUrl = dotenv.env['VITE_API_URL'];
-    print('🔗 Base URL cargada: $baseUrl');
 
     _infoscanner = _apiService.fetchTeamMovements(widget.code);
     _infoscanner
@@ -46,8 +47,8 @@ class _ResultPageState extends State<ResultPage> {
 
       setState(() {
         // Datos de team
+        teamId = team.id;
         nombreProducto = team.description;
-        descripcion = team.description;
         stock = team.stock;
         boton = team.id;
         estado = team.stateCalibration;
@@ -56,6 +57,7 @@ class _ResultPageState extends State<ResultPage> {
         if (items.isNotEmpty) {
           final item = items.first;
           diaEntrega = item.movement.deliveryDate ?? '';
+          descripcion = item.movement.description?? '';
           // direccionEntrega = 'Dirección X'; 
           diaRegreso = item.movement.returnDate ?? '';
         }
@@ -118,6 +120,10 @@ class _ResultPageState extends State<ResultPage> {
                     const SnackBar(
                       content: Text('✅ Producto marcado como recibido'),
                     ),
+                  );
+                   Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomePage()),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

@@ -16,6 +16,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('isLoggedIn');
+    
 
     // Navegar reemplazando la ruta actual
     Navigator.pushAndRemoveUntil(
@@ -82,27 +83,7 @@ class _HomePageState extends State<HomePage> {
                 label: const Text('Escanear código'),
               ),
             ),
-            SizedBox(height: 20.h),
-            SizedBox(
-              width: 250.w,
-              height: 70.h,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => NuevoMovimientoEquipos()),
-                  );
-                },
-                icon: const Icon(Icons.qr_code_scanner, size: 30),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.secondary,
-                  foregroundColor: colorScheme.onSecondary,
-                  textStyle: TextStyle(fontSize: 20.sp),
-                ),
-                label: const Text('Nuevo movimiento'),
-              ),
-            ),
+
           ],
         ),
       ),
