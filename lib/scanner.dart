@@ -16,7 +16,8 @@ class ScannerPage extends StatefulWidget {
 
 class _ScannerPageState extends State<ScannerPage> {
   bool _isProcessing = false;
-  final MobileScannerController scannerController = MobileScannerController();
+  final MobileScannerController scannerController = MobileScannerController( detectionSpeed: DetectionSpeed.noDuplicates,
+  returnImage: true,);
 
   Future<void> _handleDetection(String value) async {
     if (_isProcessing) return;
@@ -60,10 +61,7 @@ class _ScannerPageState extends State<ScannerPage> {
       body: Stack(
         children: [
           MobileScanner(
-            controller: MobileScannerController(
-              detectionSpeed: DetectionSpeed.noDuplicates,
-              returnImage: true,
-            ),
+            controller: scannerController,
             onDetect: (capture) {
               final String? value = capture.barcodes.first.rawValue;
               if (value != null) {
